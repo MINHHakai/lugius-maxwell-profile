@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lugius Maxwell</title>
     
+    <!-- Preconnect để load font và icon nhanh hơn -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -44,7 +49,86 @@
             background-color: #000;
             color: var(--text-main);
             transition: var(--transition);
+        }
+
+        /* ================= PRELOADER (MÀN HÌNH CHỜ) ================= */
+        #preloader {
+            position: fixed;
+            inset: 0;
+            background-color: #000;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+        }
+
+        #preloader.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        /* Vòng xoay loading */
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #0071e3; /* Màu xanh Apple */
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+            transition: var(--transition);
+        }
+
+        @keyframes spin { 
+            to { transform: rotate(360deg); } 
+        }
+
+        .loading-text {
+            color: #888;
+            font-size: 14px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+
+        /* Nút Vào Trang */
+        #enter-btn {
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+            background: #0071e3;
+            border: none;
+            border-radius: 30px;
             cursor: pointer;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.5s ease;
+            pointer-events: none; /* Không cho bấm khi đang ẩn */
+        }
+
+        #enter-btn.show {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        #enter-btn:hover {
+            background: #0077ed;
+            transform: scale(1.05);
+        }
+        /* ========================================================== */
+
+        /* Main Content Ẩn lúc đầu */
+        .main-wrapper {
+            opacity: 0;
+            transition: opacity 1s ease 0.5s; /* Hiện lên chậm hơn preloader xíu */
+        }
+        .main-wrapper.show {
+            opacity: 1;
         }
 
         /* Video Background */
@@ -80,9 +164,14 @@
             height: 100vh;
             transform: translate(-50%, -50%);
             object-fit: cover;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+        
+        .video-background video.is-playing {
+            opacity: 1;
         }
 
-        /* Ẩn/Hiện Video theo Theme */
         #bg-video-light { display: none; }
         body.light-mode #bg-video-dark { display: none; }
         body.light-mode #bg-video-light { display: block; }
@@ -129,39 +218,12 @@
             transition: var(--transition);
         }
 
-        .avatar:hover {
-            transform: scale(1.05);
-        }
+        .avatar:hover { transform: scale(1.05); }
 
-        h1 {
-            font-size: 26px;
-            font-weight: 700;
-            margin-bottom: 5px;
-            letter-spacing: 0.5px;
-        }
-
-        .roles {
-            font-size: 14px;
-            color: var(--text-sub);
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            margin-bottom: 20px;
-            font-weight: 600;
-        }
-
-        .slogan {
-            font-size: 16px;
-            font-style: italic;
-            margin-bottom: 30px;
-            min-height: 24px; 
-            font-weight: 300;
-        }
-
-        .links {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
+        h1 { font-size: 26px; font-weight: 700; margin-bottom: 5px; letter-spacing: 0.5px; }
+        .roles { font-size: 14px; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 20px; font-weight: 600; }
+        .slogan { font-size: 16px; font-style: italic; margin-bottom: 30px; min-height: 24px; font-weight: 300; }
+        .links { display: flex; flex-direction: column; gap: 12px; }
 
         .btn {
             display: flex;
@@ -181,14 +243,9 @@
             overflow: hidden;
         }
 
-        .btn:hover {
-            background: var(--btn-hover);
-            transform: scale(1.02);
-        }
-
+        .btn:hover { background: var(--btn-hover); transform: scale(1.02); }
         .btn i { font-size: 18px; }
 
-        /* Top Controls */
         .top-controls {
             position: absolute;
             top: 20px;
@@ -242,75 +299,133 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        #particle-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            pointer-events: none;
-            z-index: 5;
-        }
+        #particle-canvas { position: fixed; top: 0; left: 0; pointer-events: none; z-index: 5; }
     </style>
 </head>
-<body onclick="playAudio()">
+<body>
 
-    <!-- Background Videos -->
-    <div class="video-background">
-        <!-- Video Tối (Mặc định) -->
-        <video autoplay loop muted playsinline id="bg-video-dark">
-    <source src="https://files.catbox.moe/hymirk.mp4" type="video/mp4">
-</video>
-<video autoplay loop muted playsinline id="bg-video-light">
-    <source src="https://files.catbox.moe/2n3ei7.mp4" type="video/mp4">
-</video>
+    <!-- 1. MÀN HÌNH CHỜ (PRELOADER) -->
+    <div id="preloader">
+        <div class="spinner" id="spinner"></div>
+        <div class="loading-text" id="loading-text">Đang tải không gian...</div>
+        <button id="enter-btn">Vào Trang</button>
     </div>
 
-    <canvas id="particle-canvas"></canvas>
-
-    <div class="top-controls">
-        <div class="clock" id="clock">00:00:00</div>
-        <div class="controls-right">
-            <button class="audio-toggle" id="audioBtn" title="Bật/Tắt âm thanh">
-                <i class="fa-solid fa-volume-xmark"></i>
-            </button>
-            <button class="theme-toggle" id="themeBtn" title="Đổi giao diện">
-                <i class="fa-solid fa-moon"></i>
-            </button>
+    <!-- 2. NỘI DUNG CHÍNH -->
+    <div class="main-wrapper" id="main-wrapper">
+        
+        <!-- Background Videos -->
+        <div class="video-background">
+            <video loop muted playsinline id="bg-video-dark" preload="auto">
+                <source src="https://files.catbox.moe/hymirk.mp4" type="video/mp4">
+            </video>
+            
+            <video loop muted playsinline id="bg-video-light" preload="auto">
+                <source src="https://files.catbox.moe/2n3ei7.mp4" type="video/mp4">
+            </video>
         </div>
-    </div>
 
-    <div class="container">
-        <div class="profile-card">
-            <img src="./avatar.jpg" alt="Lugius Maxwell" class="avatar">
-            
-            <h1>Lugius Maxwell</h1>
-            <div class="roles">MOD | FREELANCER | STUDENT</div>
-            
-            <p class="slogan" id="typewriter"></p>
+        <canvas id="particle-canvas"></canvas>
 
-            <div class="links">
-                <a href="https://discord.gg/Ku7x8T3X2r" target="_blank" class="btn" style="color: #5865F2;">
-                    <i class="fa-brands fa-discord"></i> Discord Server
-                </a>
-                <a href="https://youtube.com/@keoholo-9012" target="_blank" class="btn" style="color: #FF0000;">
-                    <i class="fa-brands fa-youtube"></i> YouTube
-                </a>
-                <a href="https://www.facebook.com/share/18f9yC67Hi/" target="_blank" class="btn" style="color: #1877F2;">
-                    <i class="fa-brands fa-facebook"></i> Facebook
-                </a>
+        <div class="top-controls">
+            <div class="clock" id="clock">00:00:00</div>
+            <div class="controls-right">
+                <button class="audio-toggle" id="audioBtn" title="Bật/Tắt âm thanh">
+                    <i class="fa-solid fa-volume-high"></i>
+                </button>
+                <button class="theme-toggle" id="themeBtn" title="Đổi giao diện">
+                    <i class="fa-solid fa-moon"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="profile-card">
+                <img src="https://i.ibb.co/3k6vV4v/avatar.jpg" alt="Lugius Maxwell" class="avatar">
+                
+                <h1>Lugius Maxwell</h1>
+                <div class="roles">MOD | FREELANCER | STUDENT</div>
+                
+                <p class="slogan" id="typewriter"></p>
+
+                <div class="links">
+                    <a href="https://discord.gg/Ku7x8T3X2r" target="_blank" class="btn" style="color: #5865F2;">
+                        <i class="fa-brands fa-discord"></i> Discord Server
+                    </a>
+                    <a href="https://youtube.com/@keoholo-9012" target="_blank" class="btn" style="color: #FF0000;">
+                        <i class="fa-brands fa-youtube"></i> YouTube
+                    </a>
+                    <a href="https://www.facebook.com/share/18f9yC67Hi/" target="_blank" class="btn" style="color: #1877F2;">
+                        <i class="fa-brands fa-facebook"></i> Facebook
+                    </a>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
+        // --- KHỞI TẠO BIẾN ---
+        const preloader = document.getElementById('preloader');
+        const enterBtn = document.getElementById('enter-btn');
+        const spinner = document.getElementById('spinner');
+        const loadingText = document.getElementById('loading-text');
+        const mainWrapper = document.getElementById('main-wrapper');
+        
         const videoDark = document.getElementById('bg-video-dark');
         const videoLight = document.getElementById('bg-video-light');
+        
+        let videosLoaded = 0;
+        let isMuted = false; // Mặc định mở âm thanh vì đã có nút Click
 
-        // Lấy video đang hiển thị (tùy thuộc vào theme hiện tại)
+        // --- LOGIC PRELOADER ---
+        // Hàm kiểm tra khi 1 video đã tải xong
+        function videoReady() {
+            videosLoaded++;
+            // Nếu cả 2 video đã sẵn sàng
+            if (videosLoaded >= 2) {
+                // Đổi giao diện Preloader
+                spinner.style.display = 'none';
+                loadingText.style.display = 'none';
+                enterBtn.classList.add('show'); // Hiện nút bấm
+            }
+        }
+
+        // Lắng nghe sự kiện video tải xong (canplaythrough)
+        videoDark.addEventListener('canplaythrough', videoReady, { once: true });
+        videoLight.addEventListener('canplaythrough', videoReady, { once: true });
+
+        // Dự phòng: Nếu mạng quá nhanh load xong trước cả khi gắn sự kiện
+        if (videoDark.readyState >= 3) { videosLoaded++; }
+        if (videoLight.readyState >= 3) { videosLoaded++; }
+        if (videosLoaded >= 2) videoReady();
+
+        // Sự kiện khi người dùng bấm nút "Vào Trang"
+        enterBtn.addEventListener('click', () => {
+            // 1. Ẩn màn hình chờ
+            preloader.classList.add('hidden');
+            
+            // 2. Hiện nội dung chính
+            mainWrapper.classList.add('show');
+
+            // 3. Kích hoạt video đang dùng và BẬT ÂM THANH
+            const activeVideo = document.body.classList.contains('light-mode') ? videoLight : videoDark;
+            activeVideo.classList.add('is-playing');
+            activeVideo.muted = false;
+            activeVideo.play();
+
+            // 4. Cập nhật icon âm thanh
+            audioIcon.classList.replace('fa-volume-xmark', 'fa-volume-high');
+            
+            // 5. Bắt đầu chạy chữ (Typewriter)
+            setTimeout(typeWriter, 500);
+        });
+
+
+        // --- CÁC TÍNH NĂNG CŨ ---
         function getActiveVideo() {
             return document.body.classList.contains('light-mode') ? videoLight : videoDark;
         }
 
-        // 1. Đồng hồ
         function updateClock() {
             const now = new Date();
             document.getElementById('clock').innerText = now.toLocaleTimeString('vi-VN', { hour12: false });
@@ -318,7 +433,6 @@
         setInterval(updateClock, 1000);
         updateClock();
 
-        // 2. Typewriter
         const text = '"Live and do what you want while you still can."';
         let i = 0;
         function typeWriter() {
@@ -328,17 +442,13 @@
                 setTimeout(typeWriter, 50);
             }
         }
-        setTimeout(typeWriter, 1000);
 
-        // 3. Theme & Video Switching
         const themeBtn = document.getElementById('themeBtn');
         const themeIcon = themeBtn.querySelector('i');
         
         if (localStorage.getItem('theme') === 'light') {
             document.body.classList.add('light-mode');
             themeIcon.classList.replace('fa-moon', 'fa-sun');
-            videoDark.pause();
-            videoLight.play();
         }
 
         themeBtn.addEventListener('click', (e) => {
@@ -348,32 +458,26 @@
             if (document.body.classList.contains('light-mode')) {
                 themeIcon.classList.replace('fa-moon', 'fa-sun');
                 localStorage.setItem('theme', 'light');
-                // Chuyển sang video sáng
+                videoDark.classList.remove('is-playing');
                 videoDark.pause();
-                videoLight.muted = videoDark.muted; // Giữ nguyên trạng thái âm thanh
+                
+                videoLight.classList.add('is-playing');
+                videoLight.muted = videoDark.muted;
                 videoLight.play();
             } else {
                 themeIcon.classList.replace('fa-sun', 'fa-moon');
                 localStorage.setItem('theme', 'dark');
-                // Chuyển sang video tối
+                videoLight.classList.remove('is-playing');
                 videoLight.pause();
+                
+                videoDark.classList.add('is-playing');
                 videoDark.muted = videoLight.muted;
                 videoDark.play();
             }
         });
 
-        // 4. Âm thanh (Áp dụng cho video đang hiển thị)
         const audioBtn = document.getElementById('audioBtn');
         const audioIcon = audioBtn.querySelector('i');
-        let isMuted = true;
-
-        function playAudio() {
-            if (isMuted) {
-                getActiveVideo().muted = false;
-                isMuted = false;
-                audioIcon.classList.replace('fa-volume-xmark', 'fa-volume-high');
-            }
-        }
 
         audioBtn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -388,23 +492,7 @@
             }
         });
 
-        // 5. Popup
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                Swal.fire({
-                    title: 'Chào mừng!',
-                    text: 'Nhấn vào màn hình để bật âm thanh (nếu có).',
-                    icon: 'info',
-                    background: document.body.classList.contains('light-mode') ? '#fff' : '#1c1c1e',
-                    color: document.body.classList.contains('light-mode') ? '#000' : '#fff',
-                    confirmButtonColor: '#0071e3',
-                    confirmButtonText: 'OK',
-                    backdrop: `rgba(0,0,0,0.4)`
-                });
-            }, 500);
-        });
-
-        // 6. Particles
+        // Particles
         const canvas = document.getElementById('particle-canvas');
         const ctx = canvas.getContext('2d');
         let particles = [];
@@ -428,10 +516,7 @@
             update() {
                 this.x += this.speedX;
                 this.y += this.speedY;
-                if (this.y > canvas.height) {
-                    this.y = 0;
-                    this.x = Math.random() * canvas.width;
-                }
+                if (this.y > canvas.height) { this.y = 0; this.x = Math.random() * canvas.width; }
                 if (this.x > canvas.width) this.x = 0;
                 if (this.x < 0) this.x = canvas.width;
             }
@@ -446,16 +531,11 @@
             }
         }
 
-        for (let i = 0; i < 100; i++) {
-            particles.push(new Particle());
-        }
+        for (let i = 0; i < 100; i++) { particles.push(new Particle()); }
 
         function animateParticles() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            particles.forEach(p => {
-                p.update();
-                p.draw();
-            });
+            particles.forEach(p => { p.update(); p.draw(); });
             requestAnimationFrame(animateParticles);
         }
         animateParticles();
